@@ -37,12 +37,19 @@ class MyAppState extends ChangeNotifier {
 
   var favorites = <WordPair>[];
 
+  /// 切换收藏状态
   void toggleFavorite() {
     if (favorites.contains(current)) {
       favorites.remove(current);
     } else {
       favorites.add(current);
     }
+    notifyListeners();
+  }
+
+  /// 移除收藏
+  void removeFavorite(WordPair pair) {
+    favorites.remove(pair);
     notifyListeners();
   }
 }
@@ -63,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
         page = GeneratorPage();
         break;
       case 1:
-        page = Placeholder();
+        page = GeneratedFavoritesPage();
         break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -76,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             SafeArea(
               child: NavigationRail(
-                extended: constraints.maxWidth >= 1080,
+                extended: constraints.maxWidth >= 840,
                 destinations: [
                   NavigationRailDestination(
                     icon: Icon(Icons.home),
@@ -148,6 +155,52 @@ class GeneratorPage extends StatelessWidget {
           )
         ],
       ),
+    );
+  }
+}
+
+class GeneratedFavoritesPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+
+    if (appState.favorites.isEmpty) {
+      return Center(
+        child: Text(
+          'No favorites yet.',
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+      );
+    }
+
+    return ListView(
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Text(
+                'You have ${appState.favorites.length} favorites:',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineMedium!
+                    .copyWith(color: Theme.of(context).colorScheme.onPrimary),
+              ),
+            ),
+            ...appState.favorites
+                .map((favorite) => ListTile(
+                      leading: Icon(Icons.favorite),
+                      title: Text(favorite.asLowerCase),
+                      onTap: () {
+                        appState.removeFavorite(favorite);
+                      },
+                    ))
+                .toList(),
+          ],
+        ),
+      ],
     );
   }
 }
